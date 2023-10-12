@@ -1,21 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const admin = require('../config/firebase/admin');
-const axios = require('axios');
-const { ref, getDownloadURL } = require("firebase/storage");
-const { storage } = require("../config/firebase/firebase");
 
 const bucket = admin.storage().bucket();
+const fs = require('fs')
 
-
-function generatePlaylist(tsFiles) {
+function generatePlaylist({ tsFiles, extinfLines }) {
     let playlist = "#EXTM3U\n";
     playlist += "#EXT-X-VERSION:3\n";
     playlist += "#EXT-X-TARGETDURATION:11\n";
     playlist += "#EXT-X-MEDIA-SEQUENCE:0\n";
 
     tsFiles.forEach((tsFile, index) => {
-        playlist += `#EXTINF:12.000000,\n`;
+        playlist += `${extinfLines[index]}\n`;
         playlist += `${tsFile}\n`;
     });
 
@@ -24,84 +21,37 @@ function generatePlaylist(tsFiles) {
     return playlist;
 }
 
-router.get('/:slug/playlist.m3u8', async (req, res, next) => {
+router.get('/:slug/:quality', async (req, res, next) => {
     const link = req.params.slug;
-    const filePath = `video/videos/${link}/1080p.m3u8`;
+    const quality = req.params.quality
 
-    // try {
-    //     const file = bucket.file(filePath);
-    //     const fileExists = await file.exists();
 
-    //     if (!fileExists[0]) {
-    //         res.status(404).send('File not found');
-    //         return;
-    //     }
-
-    //     const [metadata] = await file.getMetadata();
-    //     const fileSize = metadata.size;
-    //     const range = req.headers.range;
-
-    //     if (range) {
-    //         const [start, end] = range.replace(/bytes=/, '').split('-');
-    //         const chunkSize = end ? parseInt(end) - parseInt(start) + 1 : fileSize;
-    //         const options = {
-    //             start: parseInt(start),
-    //             end: parseInt(end),
-    //         };
-
-    //         const fileStream = file.createReadStream(options);
-    //         const head = {
-    //             'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-    //             'Accept-Ranges': 'bytes',
-    //             // 'Content-Length': chunkSize,
-    //             'Content-Type': 'video/mp2t',
-    //         };
-
-    //         res.writeHead(206, head);
-    //         fileStream.pipe(res);
-    //     } else {
-    //         const head = {
-    //             // 'Content-Length': fileSize,
-    //             'Content-Type': 'video/mp2t',
-    //         };
-    //         res.writeHead(200, head);
-    //         file.createReadStream().pipe(res);
-    //     }
-
-    // } catch (error) {
-    //     console.error('Error:', error);
-    //     res.status(500).send('Internal Server Error');
-    // }
-    const m3u8File = await admin.storage().bucket().file(`video/videos/${link}/1080p.m3u8`).download();
+    const m3u8File = await fs.readFileSync(`F:/saveFiles/${link}/${quality}p.m3u8`, 'utf-8');
     const m3u8Content = m3u8File.toString('utf-8');
-    if (req.originalUrl.includes("playlist.m3u8")) {
+    const extinfLines = m3u8Content.match(/#EXTINF:[\d.]+,/g);
+
+
+    try {
         const tsFiles = []; // Mảng chứa đường dẫn các file .ts
-        const files = await bucket.getFiles({
-            prefix: `video/videos/${link}/`,
-            delimiter: '/'
-        });
-
-        files[0].forEach(file => {
-            if (file.name.endsWith(".ts")) {
-                const fileName = file.name.split(`${link}/`)[1]
-
-                // const tsFilePath = `https://storage.googleapis.com/download/storage/v1/b/${admin.storage().bucket().name}/o/video%2Fvideos%2F${link}%2F${fileName}?alt=media`;
-                // const tsFilePath = `https://firebasestorage.googleapis.com/v0/b/carymei.appspot.com/o/video%2Fvideos%2F${link}%2F${fileName}?alt=media`
-                const tsFilePath = `http://localhost:5000/api/segment/${link}/${fileName}`
+        const files = await fs.readdirSync(`F:/saveFiles/${link}`)
+        files.forEach(file => {
+            if (file.endsWith(".ts") && file.includes(quality)) {
+                const tsFilePath = `http://42.112.215.156:5001/api/segment/${link}/${file}`
                 tsFiles.push(tsFilePath)
-
             }
         });
 
-        const playlist = generatePlaylist(tsFiles); // Hàm tạo playlist.m3u8 từ danh sách file .ts
-
+        const playlist = generatePlaylist({ tsFiles, extinfLines }); // Hàm tạo playlist.m3u8 từ danh sách file .ts
+        console.log(playlist)
         res.writeHead(200, {
             'Content-Type': 'application/vnd.apple.mpegurl',
         });
         res.end(playlist);
         return;
-    }
 
+    } catch (error) {
+        return res.status(404)
+    }
 });
 
 module.exports = router;

@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const admin = require('../config/firebase/admin');
+const fs = require('fs');
 
 router.get('/:link/:name', async (req, res) => {
     const name = req.params.name
     const link = req.params.link;
-    const [file] = await admin.storage().bucket().file(`video/videos/${link}/${name}`).download();
-    res.end(file)
+    const buffer = fs.createReadStream(`F:/saveFiles/${link}/${name}`);
+    buffer.pipe(res)
 })
 
 
