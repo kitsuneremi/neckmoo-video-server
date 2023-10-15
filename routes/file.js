@@ -21,28 +21,25 @@ function generatePlaylist({ tsFiles, extinfLines }) {
     return playlist;
 }
 
-router.get('/:slug/:quality', async (req, res, next) => {
+router.get('/:slug/:name', async (req, res, next) => {
     const link = req.params.slug;
-    const quality = req.params.quality
+    const name = req.params.name
 
 
-    const m3u8File = await fs.readFileSync(`F:/saveFiles/${link}/${quality}p.m3u8`, 'utf-8');
+    const m3u8File = await fs.readFileSync(`F:/saveFiles/${link}/${name}`, 'utf-8');
     const m3u8Content = m3u8File.toString('utf-8');
     const extinfLines = m3u8Content.match(/#EXTINF:[\d.]+,/g);
-
 
     try {
         const tsFiles = []; // Mảng chứa đường dẫn các file .ts
         const files = await fs.readdirSync(`F:/saveFiles/${link}`)
         files.forEach(file => {
-            if (file.endsWith(".ts") && file.includes(quality)) {
-                const tsFilePath = `http://42.112.215.156:5001/api/segment/${link}/${file}`
+            if (file.endsWith('.ts') && file.includes(name.split('.')[0])) {
+                const tsFilePath = `https://file.erinasaiyukii.com/api/segment/${link}/${file}`
                 tsFiles.push(tsFilePath)
             }
         });
-
         const playlist = generatePlaylist({ tsFiles, extinfLines }); // Hàm tạo playlist.m3u8 từ danh sách file .ts
-        console.log(playlist)
         res.writeHead(200, {
             'Content-Type': 'application/vnd.apple.mpegurl',
         });
