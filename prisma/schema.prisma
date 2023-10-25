@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Accounts {
+  id            Int             @id @default(autoincrement())
+  email         String          @unique
+  name          String
+  password      String
+  username      String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  channel       Channels?
+  comment       Comment[]
+  Likes         Likes?
+  Member        Member[]
+  Notifications Notifications[]
+  Subcribes     Subcribes[]
+}
+
+model Channels {
+  id            Int             @id @default(autoincrement())
+  name          String
+  tagName       String          @unique
+  des           String          @default("")
+  accountId     Int             @unique
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  account       Accounts        @relation(fields: [accountId], references: [id])
+  ListVideo     ListVideo[]
+  Notifications Notifications[]
+  Posts         Posts?
+  Subcribes     Subcribes[]
+  Videos        Videos[]
+}
+
+model Videos {
+  id              Int               @id @default(autoincrement())
+  title           String
+  des             String            @default("")
+  view            Int               @default(0)
+  status          Int
+  link            String
+  channelId       Int               @default(3)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  comment         Comment[]
+  DetailListVideo DetailListVideo[]
+  DetailTags      DetailTags?
+  Likes           Likes?
+  channel         Channels          @relation(fields: [channelId], references: [id])
+
+  @@index([channelId], map: "Videos_channelId_fkey")
+}
+
+model Categories {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model Comment {
+  id          Int       @id @default(autoincrement())
+  videoId     Int
+  accountId   Int
+  content     String
+  status      Int
+  referenceId Int?      @map("referenceId")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  account     Accounts  @relation(fields: [accountId], references: [id])
+  reference   Comment?  @relation("ParentComment", fields: [referenceId], references: [id])
+  comments    Comment[] @relation("ParentComment")
+  video       Videos    @relation(fields: [videoId], references: [id])
+
+  @@index([accountId], map: "Comment_accountId_fkey")
+  @@index([referenceId], map: "Comment_referenceId_fkey")
+  @@index([videoId], map: "Comment_videoId_fkey")
+}
+
+model ListVideo {
+  id              Int               @id @default(autoincrement())
+  channelId       Int
+  name            String            @default("")
+  DetailListVideo DetailListVideo[]
+  channel         Channels          @relation(fields: [channelId], references: [id])
+
+  @@index([channelId], map: "ListVideo_channelId_fkey")
+}
+
+model DetailListVideo {
+  id      Int       @id @default(autoincrement())
+  videoId Int
+  listId  Int
+  list    ListVideo @relation(fields: [listId], references: [id])
+  video   Videos    @relation(fields: [videoId], references: [id])
+
+  @@index([listId], map: "DetailListVideo_listId_fkey")
+  @@index([videoId], map: "DetailListVideo_videoId_fkey")
+}
+
+model Tags {
+  id         Int         @id @unique @default(autoincrement())
+  name       String
+  DetailTags DetailTags?
+}
+
+model DetailTags {
+  id      Int    @id @unique @default(autoincrement())
+  videoId Int    @unique
+  tagId   Int    @unique
+  tag     Tags   @relation(fields: [tagId], references: [id])
+  video   Videos @relation(fields: [videoId], references: [id])
+}
+
+model Likes {
+  videoId   Int      @unique
+  accountId Int      @unique
+  type      Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  account   Accounts @relation(fields: [accountId], references: [id])
+  video     Videos   @relation(fields: [videoId], references: [id])
+
+  @@id([videoId, accountId])
+}
+
+model Notifications {
+  accountId Int
+  channelId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  title     String
+  content   String
+  account   Accounts @relation(fields: [accountId], references: [id])
+  channel   Channels @relation(fields: [channelId], references: [id])
+
+  @@id([accountId, channelId])
+  @@index([channelId], map: "Notifications_channelId_fkey")
+}
+
+model Subcribes {
+  accountId Int
+  channelId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  account   Accounts @relation(fields: [accountId], references: [id])
+  channel   Channels @relation(fields: [channelId], references: [id])
+
+  @@id([accountId, channelId])
+  @@index([channelId], map: "Subcribes_channelId_fkey")
+}
+
+model Posts {
+  id          Int      @id @unique @default(autoincrement())
+  channelId   Int      @unique
+  title       String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  channel     Channels @relation(fields: [channelId], references: [id])
+}
+
+model Room {
+  id      Int       @id @default(autoincrement())
+  name    String
+  Member  Member[]
+  Message Message[]
+}
+
+model Member {
+  id        Int       @id @default(autoincrement())
+  roomId    Int
+  accountId Int
+  name      String
+  Account   Accounts  @relation(fields: [accountId], references: [id])
+  Room      Room      @relation(fields: [roomId], references: [id])
+  Message   Message[]
+
+  @@index([accountId], map: "Member_accountId_fkey")
+  @@index([roomId], map: "Member_roomId_fkey")
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  roomId    Int
+  memberId  Int
+  content   String
+  createdAt DateTime @default(now())
+  Member    Member   @relation(fields: [memberId], references: [id])
+  Room      Room     @relation(fields: [roomId], references: [id])
+
+  @@index([roomId, memberId], map: "Messages_roomId_memberId_unique")
+  @@index([memberId], map: "Messages_memberId_fkey")
+}

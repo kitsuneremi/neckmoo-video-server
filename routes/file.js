@@ -23,29 +23,40 @@ function generatePlaylist({ tsFiles, extinfLines }) {
 
 router.get('/:slug/:name', async (req, res, next) => {
     const link = req.params.slug;
-    const name = req.params.name
+    const name = req.params.name;
 
-
-    const m3u8File = await fs.readFileSync(`F:/saveFiles/${link}/${name}`, 'utf-8');
-    const m3u8Content = m3u8File.toString('utf-8');
-    const extinfLines = m3u8Content.match(/#EXTINF:[\d.]+,/g);
+    console.log('get ' + link + ' file');
 
     try {
-        const tsFiles = []; // Mảng chứa đường dẫn các file .ts
-        const files = await fs.readdirSync(`F:/saveFiles/${link}`)
-        files.forEach(file => {
-            if (file.endsWith('.ts') && file.includes(name.split('.')[0])) {
-                const tsFilePath = `https://file.erinasaiyukii.com/api/segment/${link}/${file}`
-                tsFiles.push(tsFilePath)
-            }
-        });
-        const playlist = generatePlaylist({ tsFiles, extinfLines }); // Hàm tạo playlist.m3u8 từ danh sách file .ts
-        res.writeHead(200, {
-            'Content-Type': 'application/vnd.apple.mpegurl',
-        });
-        res.end(playlist);
-        return;
+        const m3u8File = fs.readFileSync(`F:/saveFiles/${link}/${name}`, 'utf-8');
+        const m3u8Content = m3u8File.toString('utf-8');
+        const extinfLines = m3u8Content.match(/#EXTINF:[\d.]+,/g);
 
+        try {
+            const tsFiles = []; // Mảng chứa đường dẫn các file .ts
+            const files = fs.readdirSync(`F:/saveFiles/${link}`)
+            const sortedFiles = files
+                .filter(file => file.endsWith('.ts') && file.includes(name.split('.')[0]))
+                .sort((a, b) => {
+                    const numberA = Number.parseInt(a.split('.')[0].split('p')[1]);
+                    const numberB = Number.parseInt(b.split('.')[0].split('p')[1]);
+                    return numberA - numberB; // Sắp xếp tệp theo thứ tự số
+                });
+
+            sortedFiles.forEach(file => {
+                const tsFilePath = `https://file.erinasaiyukii.com/api/segment/${link}/${file}`;
+                tsFiles.push(tsFilePath);
+            });
+            const playlist = generatePlaylist({ tsFiles, extinfLines }); // Hàm tạo playlist.m3u8 từ danh sách file .ts
+            res.writeHead(200, {
+                'Content-Type': 'application/vnd.apple.mpegurl',
+            });
+            res.end(playlist);
+            return;
+
+        } catch (error) {
+            return res.status(500)
+        }
     } catch (error) {
         return res.status(404)
     }
