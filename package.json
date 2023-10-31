@@ -2,7 +2,7 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./config/server/server.js",
   "scripts": {
     "start": "nodemon ./config/server/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"

@@ -5,6 +5,10 @@ const admin = require('../config/firebase/admin');
 const bucket = admin.storage().bucket();
 const fs = require('fs')
 
+const url = "https://file.erinasaiyukii.com"
+const localUrl = "http://192.168.1.187:5001"
+
+
 function generatePlaylist({ tsFiles, extinfLines }) {
     let playlist = "#EXTM3U\n";
     playlist += "#EXT-X-VERSION:3\n";
@@ -21,7 +25,7 @@ function generatePlaylist({ tsFiles, extinfLines }) {
     return playlist;
 }
 
-router.get('/:link', async (req, res, next) => {
+router.get('/:link', async (req, res) => {
     const link = req.params.link
 
     try {
@@ -31,27 +35,31 @@ router.get('/:link', async (req, res, next) => {
         });
         const tsFiles = [];
 
-        const m3u8File = await fs.readFileSync(`F:/live/${link}.m3u8`, 'utf-8');
+        const m3u8File = await fs.readFileSync(`D:/live/${link}.m3u8`, 'utf-8');
         const m3u8Content = m3u8File.toString('utf-8');
         const extinfLines = m3u8Content.match(/#EXTINF:[\d.]+,/g);
 
-        const p = fs.readdirSync(`F:/live`)
+        const p = fs.readdirSync(`D:/live`)
         const files = p.filter(file => {
             return file.includes(link) && file.endsWith(".ts")
         })
 
         console.log('load live ' + link)
 
-        files.sort((a, b) => {
-            return a.split('.')[0].split('-')[1] > b.split('.')[0].split('-')[1]
-        })
-        files.forEach(file => {
-            const tsFilePath = `https://live.erinasaiyukii.com/api/livefile/${file}`
+        const sortedFiles = files
+            .sort((a, b) => {
+                const numberA = Number.parseInt(a.split('.')[0].split('-')[1]);
+                const numberB = Number.parseInt(b.split('.')[0].split('-')[1]);
+                return numberA - numberB; // Sắp xếp tệp theo thứ tự số
+            });
+        sortedFiles.forEach(file => {
+            const tsFilePath = `${url}/api/livefile/${file}`
             tsFiles.push(tsFilePath)
         });
 
-        
+
         const playlist = generatePlaylist({ tsFiles, extinfLines });
+        console.log(playlist)
         res.end(playlist)
 
 

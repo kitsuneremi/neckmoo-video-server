@@ -5,6 +5,9 @@ const admin = require('../config/firebase/admin');
 const bucket = admin.storage().bucket();
 const fs = require('fs')
 
+const url = "https://file.erinasaiyukii.com"
+const localUrl = "http://192.168.1.187:5001"
+
 function generatePlaylist({ tsFiles, extinfLines }) {
     let playlist = "#EXTM3U\n";
     playlist += "#EXT-X-VERSION:3\n";
@@ -28,13 +31,13 @@ router.get('/:slug/:name', async (req, res, next) => {
     console.log('get ' + link + ' file');
 
     try {
-        const m3u8File = fs.readFileSync(`F:/saveFiles/${link}/${name}`, 'utf-8');
+        const m3u8File = fs.readFileSync(`D:/saveFiles/${link}/${name}`, 'utf-8');
         const m3u8Content = m3u8File.toString('utf-8');
         const extinfLines = m3u8Content.match(/#EXTINF:[\d.]+,/g);
 
         try {
             const tsFiles = []; // Mảng chứa đường dẫn các file .ts
-            const files = fs.readdirSync(`F:/saveFiles/${link}`)
+            const files = fs.readdirSync(`D:/saveFiles/${link}`)
             const sortedFiles = files
                 .filter(file => file.endsWith('.ts') && file.includes(name.split('.')[0]))
                 .sort((a, b) => {
@@ -44,7 +47,7 @@ router.get('/:slug/:name', async (req, res, next) => {
                 });
 
             sortedFiles.forEach(file => {
-                const tsFilePath = `https://file.erinasaiyukii.com/api/segment/${link}/${file}`;
+                const tsFilePath = `${localUrl}/api/segment/${link}/${file}`;
                 tsFiles.push(tsFilePath);
             });
             const playlist = generatePlaylist({ tsFiles, extinfLines }); // Hàm tạo playlist.m3u8 từ danh sách file .ts
@@ -55,10 +58,10 @@ router.get('/:slug/:name', async (req, res, next) => {
             return;
 
         } catch (error) {
-            return res.status(500)
+            return res.send('error')
         }
     } catch (error) {
-        return res.status(404)
+        return res.send('not found')
     }
 });
 
