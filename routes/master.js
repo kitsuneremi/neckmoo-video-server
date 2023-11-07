@@ -20,7 +20,7 @@ router.get('/:slug', async (req, res, next) => {
         if (line.endsWith('.m3u8')) {
             // Chuyển đổi tên file .m3u8 thành đường dẫn tương ứng
             const fileName = line.trim();
-            const m3u8Path = `${localUrl}/api/merge/${link}/${fileName}`;
+            const m3u8Path = `${url}/api/merge/${link}/${fileName}`;
             // const m3u8Path = `http://localhost:5001/api/merge/${link}/${fileName}`;
             return m3u8Path;
         } else {
