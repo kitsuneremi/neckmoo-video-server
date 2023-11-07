@@ -19,9 +19,6 @@ function generatePlaylist({ tsFiles, extinfLines }) {
         playlist += `${extinfLines[index]}\n`;
         playlist += `${tsFile}\n`;
     });
-
-    playlist += "#EXT-X-ENDLIST";
-
     return playlist;
 }
 
@@ -35,25 +32,27 @@ router.get('/:link', async (req, res) => {
         });
         const tsFiles = [];
 
-        const m3u8File = await fs.readFileSync(`D:/live/${link}.m3u8`, 'utf-8');
+        const m3u8File = await fs.readFileSync(`D:/live/${link}/index.m3u8`, 'utf-8');
         const m3u8Content = m3u8File.toString('utf-8');
         const extinfLines = m3u8Content.match(/#EXTINF:[\d.]+,/g);
 
-        const p = fs.readdirSync(`D:/live`)
+        const p = fs.readdirSync(`D:/live/${link}`)
         const files = p.filter(file => {
-            return file.includes(link) && file.endsWith(".ts")
+            return file.endsWith(".ts")
         })
 
         console.log('load live ' + link)
 
         const sortedFiles = files
             .sort((a, b) => {
-                const numberA = Number.parseInt(a.split('.')[0].split('-')[1]);
-                const numberB = Number.parseInt(b.split('.')[0].split('-')[1]);
+                const numberA = Number.parseInt(a.split('.')[0]);
+                const numberB = Number.parseInt(b.split('.')[0]);
                 return numberA - numberB; // Sắp xếp tệp theo thứ tự số
             });
+
+        sortedFiles.pop();
         sortedFiles.forEach(file => {
-            const tsFilePath = `${url}/api/livefile/${file}`
+            const tsFilePath = `${url}/api/livefile/${link}/${file}`
             tsFiles.push(tsFilePath)
         });
 
