@@ -15,9 +15,10 @@ model Accounts {
   username      String
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+  streamKey     String          @unique @default(uuid())
   channel       Channels?
   comment       Comment[]
-  Likes         Likes?
+  Likes         Likes[]
   Member        Member[]
   Notifications Notifications[]
   Subcribes     Subcribes[]
@@ -31,31 +32,14 @@ model Channels {
   accountId     Int             @unique
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+  streamKey     String          @unique @default(uuid())
+  live          Boolean?        @default(false)
   account       Accounts        @relation(fields: [accountId], references: [id])
   ListVideo     ListVideo[]
+  Media         Media[]
   Notifications Notifications[]
   Posts         Posts?
   Subcribes     Subcribes[]
-  Videos        Videos[]
-}
-
-model Videos {
-  id              Int               @id @default(autoincrement())
-  title           String
-  des             String            @default("")
-  view            Int               @default(0)
-  status          Int
-  link            String
-  channelId       Int               @default(3)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  comment         Comment[]
-  DetailListVideo DetailListVideo[]
-  DetailTags      DetailTags?
-  Likes           Likes?
-  channel         Channels          @relation(fields: [channelId], references: [id])
-
-  @@index([channelId], map: "Videos_channelId_fkey")
 }
 
 model Categories {
@@ -65,21 +49,21 @@ model Categories {
 
 model Comment {
   id          Int       @id @default(autoincrement())
-  videoId     Int
   accountId   Int
   content     String
   status      Int
   referenceId Int?      @map("referenceId")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  mediaId     Int
   account     Accounts  @relation(fields: [accountId], references: [id])
+  Media       Media     @relation(fields: [mediaId], references: [id])
   reference   Comment?  @relation("ParentComment", fields: [referenceId], references: [id])
   comments    Comment[] @relation("ParentComment")
-  video       Videos    @relation(fields: [videoId], references: [id])
 
   @@index([accountId], map: "Comment_accountId_fkey")
   @@index([referenceId], map: "Comment_referenceId_fkey")
-  @@index([videoId], map: "Comment_videoId_fkey")
+  @@index([mediaId], map: "Comment_mediaId_fkey")
 }
 
 model ListVideo {
@@ -94,13 +78,13 @@ model ListVideo {
 
 model DetailListVideo {
   id      Int       @id @default(autoincrement())
-  videoId Int
   listId  Int
+  mediaId Int
   list    ListVideo @relation(fields: [listId], references: [id])
-  video   Videos    @relation(fields: [videoId], references: [id])
+  Media   Media     @relation(fields: [mediaId], references: [id])
 
   @@index([listId], map: "DetailListVideo_listId_fkey")
-  @@index([videoId], map: "DetailListVideo_videoId_fkey")
+  @@index([mediaId], map: "DetailListVideo_mediaId_fkey")
 }
 
 model Tags {
@@ -110,26 +94,29 @@ model Tags {
 }
 
 model DetailTags {
-  id      Int    @id @unique @default(autoincrement())
-  videoId Int    @unique
-  tagId   Int    @unique
-  tag     Tags   @relation(fields: [tagId], references: [id])
-  video   Videos @relation(fields: [videoId], references: [id])
+  id      Int   @id @unique @default(autoincrement())
+  tagId   Int   @unique
+  mediaId Int   @unique
+  Media   Media @relation(fields: [mediaId], references: [id])
+  tag     Tags  @relation(fields: [tagId], references: [id])
 }
 
 model Likes {
-  videoId   Int      @unique
-  accountId Int      @unique
+  id        Int      @id @default(autoincrement())
+  accountId Int
   type      Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  mediaId   Int
   account   Accounts @relation(fields: [accountId], references: [id])
-  video     Videos   @relation(fields: [videoId], references: [id])
+  Media     Media    @relation(fields: [mediaId], references: [id])
 
-  @@id([videoId, accountId])
+  @@index([accountId], map: "Likes_accountId_fkey")
+  @@index([mediaId], map: "Likes_mediaId_fkey")
 }
 
 model Notifications {
+  id        Int      @id @default(autoincrement())
   accountId Int
   channelId Int
   createdAt DateTime @default(now())
@@ -139,8 +126,8 @@ model Notifications {
   account   Accounts @relation(fields: [accountId], references: [id])
   channel   Channels @relation(fields: [channelId], references: [id])
 
-  @@id([accountId, channelId])
   @@index([channelId], map: "Notifications_channelId_fkey")
+  @@index([accountId], map: "Notifications_accountId_fkey")
 }
 
 model Subcribes {
@@ -196,4 +183,24 @@ model Message {
 
   @@index([roomId, memberId], map: "Messages_roomId_memberId_unique")
   @@index([memberId], map: "Messages_memberId_fkey")
+}
+
+model Media {
+  id              Int               @id @default(autoincrement())
+  title           String            @db.VarChar(45)
+  des             String            @db.VarChar(45)
+  status          Int               @default(0)
+  channelId       Int               
+  view            Int               @default(0)
+  createdTime     DateTime          @default(now()) @db.DateTime(0)
+  endTime         DateTime?         @db.DateTime(0)
+  isLive          Boolean?          @default(false)
+  mediaType       Int
+  link            String
+  updatedAt       DateTime
+  Comment         Comment[]
+  DetailListVideo DetailListVideo[]
+  DetailTags      DetailTags?
+  Likes           Likes[]
+  Channels        Channels          @relation(fields: [channelId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "channelId")
 }
