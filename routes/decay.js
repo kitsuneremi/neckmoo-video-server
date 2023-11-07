@@ -112,7 +112,7 @@ router.post('/video', upload.single("video"), async (req, res) => {
         }
 
         // Trả về kết quả cho người dùng
-        res.send(JSON.stringify({ title: 'Video mới đã được tải lên server thành công, hãy kiên nhẫn', content: `video ${title} đã hoàn tất`, 'status': 201 }));
+        res.status(102).send(JSON.stringify({ title: 'Video mới đã được tải lên server thành công, hãy kiên nhẫn', content: `video ${title} đã hoàn tất`, 'status': 201 }));
     } catch (error) {
         console.error(error);
         return;
@@ -121,10 +121,20 @@ router.post('/video', upload.single("video"), async (req, res) => {
 
 async function processVideo({ path, oriname, outputDirectory, size }) {
     // Các bước xử lý video giữ nguyên
-    const resolutions = [
-        { name: `${size.height.toFixed(0)}p`, scale: { width: size.width, height: size.height } },
-        { name: `${(size.height * 2 / 3).toFixed(0)}p`, scale: { width: Number.parseInt((size.width * 2 / 3).toFixed(0)), height: Number.parseInt((size.height * 2 / 3).toFixed(0)) } },
-    ];
+    let resolutions = [];
+    if (size.height >= 1080) {
+        resolutions = [
+            { name: `${size.height.toFixed(0)}p`, scale: { width: size.width, height: size.height } },
+            { name: `${(size.height * 2 / 3).toFixed(0)}p`, scale: { width: Number.parseInt((size.width * 2 / 3).toFixed(0)), height: Number.parseInt((size.height * 2 / 3).toFixed(0)) } },
+            { name: `${(size.height * 4 / 9).toFixed(0)}p`, scale: { width: Number.parseInt((size.width * 4 / 9).toFixed(0)), height: Number.parseInt((size.height * 4 / 9).toFixed(0)) } },
+        ];
+    } else if (size.height >= 720) {
+        resolutions = [
+            { name: `${size.height.toFixed(0)}p`, scale: { width: size.width, height: size.height } },
+            { name: `${(size.height * 2 / 3).toFixed(0)}p`, scale: { width: Number.parseInt((size.width * 2 / 3).toFixed(0)), height: Number.parseInt((size.height * 2 / 3).toFixed(0)) } },
+        ];
+    }
+
 
     const link = oriname.split('.')[0];
     const playlistPaths = [];
@@ -144,11 +154,12 @@ async function processVideo({ path, oriname, outputDirectory, size }) {
             `"${outputPath}"`;
 
         await executeCommand(command);
+        
         playlistPaths.push({ name, path: name + '.m3u8' });
     }
 
     const masterPlaylistPath = `${outputDirectory}/${link}/master.m3u8`;
-    const playlistEntries = playlistPaths.map((entry, index) => `#EXT-X-STREAM-INF:BANDWIDTH=800000,HEIGHT=${resolutions[index].scale.height},WIDTH=${resolutions[index].scale.width},NAME=${entry.name},RESOLUTION=${resolutions[index].scale.width}x${resolutions[index].scale.height}\n${entry.path}`).join('\n');
+    const playlistEntries = playlistPaths.map((entry, index) => `#EXT-X-STREAM-INF:BANDWIDTH=10000,HEIGHT=${resolutions[index].scale.height},WIDTH=${resolutions[index].scale.width},NAME=${entry.name},RESOLUTION=${resolutions[index].scale.width}x${resolutions[index].scale.height}\n${entry.path}`).join('\n');
     let cc = '#EXTM3U\n#EXT-X-VERSION:3\n' + playlistEntries;
     fs.writeFileSync(masterPlaylistPath, cc);
     return masterPlaylistPath;
