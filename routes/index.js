@@ -4,6 +4,7 @@ const VideoFile = require('./videoFile.js');
 const LiveFile = require('./livefile.js');
 const Live = require('./live.js');
 const Master = require('./master.js');
+const ImageProcess = require('./image.js')
 const os = require('os');
 const { PrismaClient } = require('@prisma/client');
 const { readdirSync, rmdirSync } = require('fs');
@@ -28,7 +29,8 @@ function route(app) {
     app.use('/api/livefile', LiveFile)
     app.use('/api/live', Live)
     app.use('/api/video', Master)
-    app.post('/api/auth', async (req, res) => {
+    app.use('/api/image', ImageProcess)
+    app.use('/api/auth', async (req, res) => {
         const streamKey = req.body.key;
         if (streamKey) {
             const validate = await client.channels.findUnique({
@@ -36,7 +38,7 @@ function route(app) {
                     streamKey: streamKey
                 }
             })
-
+            console.log(validate)
             if (validate && !validate.live) {
                 const updatedChannel = await client.channels.update({
                     where: {
@@ -59,7 +61,6 @@ function route(app) {
             res.status(403).send();
             return;
         }
-
     })
 
     app.post('/api/endstream', async (req, res) => {
@@ -99,63 +100,66 @@ function route(app) {
                 }
             }
         })
-        const updatedLive = await client.media.update({
-            where: {
-                id: neededUpdate.id
-            },
-            data: {
-                mediaType: 2,
-                endTime: new Date(),
-                link: makeid(),
-                isLive: false
-            }
-        })
-
-        // tiến hành di chuyển file hls sang bên thư mục video
-        try {
-            const livePath = `D:/live/${updatedChannel.tagName}`
-            const destinationPath = `D:/saveFiles/${updatedLive.link}`
-            // Đọc danh sách tệp trong thư mục nguồn
-            const files = fs.readdirSync(livePath);
-            createDirectoryIfNotExists(`D:/saveFiles/${updatedLive.link}`)
-            // Di chuyển tất cả các tệp từ thư mục nguồn sang thư mục đích
-            files.forEach((file) => {
-                const sourceFilePath = path.join(livePath, file);
-                const destinationFilePath = path.join(destinationPath, file);
-
-                // Sử dụng fs.renameSync để di chuyển tệp
-                fs.renameSync(sourceFilePath, destinationFilePath);
-                if (file === 'index.m3u8') {
-                    const newFileName = 'master.m3u8';
-                    fs.renameSync(destinationFilePath, path.join(destinationPath, newFileName));
+        console.log(neededUpdate)
+        if (neededUpdate) {
+            const updatedLive = await client.media.update({
+                where: {
+                    id: neededUpdate.id
+                },
+                data: {
+                    mediaType: 2,
+                    endTime: new Date(),
+                    link: makeid(),
+                    isLive: false
                 }
-            });
+            })
 
-            console.log(`Tất cả tệp đã được di chuyển thành công.`);
+            // tiến hành di chuyển file hls sang bên thư mục video
             try {
-                // Đọc danh sách tệp trong thư mục
+                const livePath = `D:/live/${updatedChannel.tagName}`
+                const destinationPath = `D:/saveFiles/${updatedLive.link}`
+                // Đọc danh sách tệp trong thư mục nguồn
                 const files = fs.readdirSync(livePath);
-
-                // Xóa tất cả các tệp trong thư mục
+                createDirectoryIfNotExists(`D:/saveFiles/${updatedLive.link}`)
+                // Di chuyển tất cả các tệp từ thư mục nguồn sang thư mục đích
                 files.forEach((file) => {
-                    const filePath = path.join(livePath, file);
-                    fs.unlinkSync(filePath);
+                    const sourceFilePath = path.join(livePath, file);
+                    const destinationFilePath = path.join(destinationPath, file);
+
+                    // Sử dụng fs.renameSync để di chuyển tệp
+                    fs.renameSync(sourceFilePath, destinationFilePath);
+                    if (file === 'index.m3u8') {
+                        const newFileName = 'master.m3u8';
+                        fs.renameSync(destinationFilePath, path.join(destinationPath, newFileName));
+                    }
                 });
 
-                // Xóa thư mục chính sau khi xóa tất cả tệp
-                fs.rmdirSync(livePath);
-                console.log(`Thư mục đã được xóa thành công.`);
+                console.log(`Tất cả tệp đã được di chuyển thành công.`);
+                try {
+                    // Đọc danh sách tệp trong thư mục
+                    const files = fs.readdirSync(livePath);
+
+                    // Xóa tất cả các tệp trong thư mục
+                    files.forEach((file) => {
+                        const filePath = path.join(livePath, file);
+                        fs.unlinkSync(filePath);
+                    });
+
+                    // Xóa thư mục chính sau khi xóa tất cả tệp
+                    fs.rmdirSync(livePath);
+                    console.log(`Thư mục đã được xóa thành công.`);
+                } catch (err) {
+                    console.error(`Đã xảy ra lỗi: ${err}`);
+                }
             } catch (err) {
                 console.error(`Đã xảy ra lỗi: ${err}`);
             }
-        } catch (err) {
-            console.error(`Đã xảy ra lỗi: ${err}`);
+            return;
         }
-        return;
+
     })
     app.get('/api/test', async (req, res) => {
-        const acc = await client.Accounts.findMany()
-        res.send(acc)
+        res.status(200).send('acc')
     })
 }
 
