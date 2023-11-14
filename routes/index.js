@@ -38,7 +38,6 @@ function route(app) {
                     streamKey: streamKey
                 }
             })
-            console.log(validate)
             if (validate && !validate.live) {
                 const updatedChannel = await client.channels.update({
                     where: {
@@ -100,7 +99,6 @@ function route(app) {
                 }
             }
         })
-        console.log(neededUpdate)
         if (neededUpdate) {
             const updatedLive = await client.media.update({
                 where: {
