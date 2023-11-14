@@ -58,7 +58,6 @@ router.get('/:link', async (req, res) => {
 
 
         const playlist = generatePlaylist({ tsFiles, extinfLines });
-        console.log(playlist)
         res.end(playlist)
 
 
