@@ -11,7 +11,7 @@ router.get('/:slug', async (req, res, next) => {
     const link = req.params.slug;
     console.log('get ' + link + ' master file');
     // Đọc nội dung tệp master.m3u8
-    const m3u8FilePath = `D:/saveFiles/${link}/master.m3u8`;
+    const m3u8FilePath = `C:/saveFiles/${link}/master.m3u8`;
     const m3u8Content = fs.readFileSync(m3u8FilePath, 'utf-8');
     const lines = m3u8Content.split('\n');
 

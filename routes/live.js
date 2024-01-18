@@ -32,16 +32,14 @@ router.get('/:link', async (req, res) => {
         });
         const tsFiles = [];
 
-        const m3u8File = await fs.readFileSync(`D:/live/${link}/index.m3u8`, 'utf-8');
+        const m3u8File = await fs.readFileSync(`C:/live/${link}/index.m3u8`, 'utf-8');
         const m3u8Content = m3u8File.toString('utf-8');
         const extinfLines = m3u8Content.match(/#EXTINF:[\d.]+,/g);
 
-        const p = fs.readdirSync(`D:/live/${link}`)
+        const p = fs.readdirSync(`C:/live/${link}`)
         const files = p.filter(file => {
             return file.endsWith(".ts")
         })
-
-        console.log('load live ' + link)
 
         const sortedFiles = files
             .sort((a, b) => {

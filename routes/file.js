@@ -28,13 +28,13 @@ router.get('/:slug/live', async (req, res) => {
     const link = req.params.slug;
 
     try {
-        const m3u8File = fs.readFileSync(`D:/saveFiles/${link}/master.m3u8`, 'utf-8');
+        const m3u8File = fs.readFileSync(`C:/saveFiles/${link}/master.m3u8`, 'utf-8');
         const m3u8Content = m3u8File.toString('utf-8');
         const extinfLines = m3u8Content.match(/#EXTINF:[\d.]+,/g);
 
         try {
             const tsFiles = []; // Mảng chứa đường dẫn các file .ts
-            const files = fs.readdirSync(`D:/saveFiles/${link}`)
+            const files = fs.readdirSync(`C:/saveFiles/${link}`)
             const sortedFiles = files
                 .filter(file => file.endsWith('.ts'))
                 .sort((a, b) => {
@@ -70,13 +70,13 @@ router.get('/:slug/:name', async (req, res, next) => {
     console.log('get ' + link + ' file');
 
     try {
-        const m3u8File = fs.readFileSync(`D:/saveFiles/${link}/${name}`, 'utf-8');
+        const m3u8File = fs.readFileSync(`C:/saveFiles/${link}/${name}`, 'utf-8');
         const m3u8Content = m3u8File.toString('utf-8');
         const extinfLines = m3u8Content.match(/#EXTINF:[\d.]+,/g);
 
         try {
             const tsFiles = []; // Mảng chứa đường dẫn các file .ts
-            const files = fs.readdirSync(`D:/saveFiles/${link}`)
+            const files = fs.readdirSync(`C:/saveFiles/${link}`)
             const sortedFiles = files
                 .filter(file => file.endsWith('.ts') && file.includes(name.split('.')[0]))
                 .sort((a, b) => {

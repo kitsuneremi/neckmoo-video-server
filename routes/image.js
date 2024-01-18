@@ -23,7 +23,7 @@ const createDirectoryIfNotExists = (directoryPath) => {
 
 const VideoStorage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, "D:/storage/raw");
+        cb(null, "C:/storage/raw");
     },
     filename: (req, file, cb) => {
         cb(null, file.originalname);
@@ -39,7 +39,7 @@ router.post('/imageprocess', upload.single("image"), async (req, res) => {
     sharp(rawBuffer).toFormat("webp").toBuffer()
         .then(outputBuffer => {
             // Lưu buffer mới vào file hoặc làm gì đó với nó
-            fs.writeFile(`D:/storage/image/${type}/${name}.webp`, outputBuffer, (err) => {
+            fs.writeFile(`C:/storage/image/${type}/${name}.webp`, outputBuffer, (err) => {
                 if (err) {
                     return res.status(500).send('Error saving WebP file.');
                 }

@@ -5,7 +5,7 @@ const fs = require('fs');
 router.get('/:link/:name', async (req, res) => {
     const name = req.params.name
     const link = req.params.link;
-    const buffer = fs.createReadStream(`D:/saveFiles/${link}/${name}`);
+    const buffer = fs.createReadStream(`C:/saveFiles/${link}/${name}`);
     buffer.pipe(res)
 })
 

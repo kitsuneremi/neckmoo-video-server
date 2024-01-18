@@ -33,6 +33,7 @@ function route(app) {
     app.use('/api/auth', async (req, res) => {
         const streamKey = req.body.key;
         if (streamKey) {
+            console.log(streamKey)
             const validate = await client.channels.findUnique({
                 where: {
                     streamKey: streamKey
@@ -114,11 +115,11 @@ function route(app) {
 
             // tiến hành di chuyển file hls sang bên thư mục video
             try {
-                const livePath = `D:/live/${updatedChannel.tagName}`
-                const destinationPath = `D:/saveFiles/${updatedLive.link}`
+                const livePath = `C:/live/${updatedChannel.tagName}`
+                const destinationPath = `C:/saveFiles/${updatedLive.link}`
                 // Đọc danh sách tệp trong thư mục nguồn
                 const files = fs.readdirSync(livePath);
-                createDirectoryIfNotExists(`D:/saveFiles/${updatedLive.link}`)
+                createDirectoryIfNotExists(`C:/saveFiles/${updatedLive.link}`)
                 // Di chuyển tất cả các tệp từ thư mục nguồn sang thư mục đích
                 files.forEach((file) => {
                     const sourceFilePath = path.join(livePath, file);

@@ -103,7 +103,7 @@ router.post('/video', upload.single("video"), async (req, res) => {
 
         const size = await getVideoResolution(videoPath);
 
-        ffmpegQueue.push({ path: videoPath, oriname: link, outputDirectory: 'D:/saveFiles', size, link, des, channelId, title });
+        ffmpegQueue.push({ path: videoPath, oriname: link, outputDirectory: 'C:/saveFiles', size, link, des, channelId, title });
 
         // Kiểm tra xem số lượng công việc ffmpeg đang chạy có vượt quá giới hạn không
         if (ffmpegQueue.length <= maxConcurrentFFMpegJobs) {
