@@ -10,7 +10,7 @@ const { ref, uploadBytes } = require('firebase/storage');
 const storage = require('../config/firebase/firebase')
 const { PrismaClient } = require("@prisma/client")
 const client = new PrismaClient();
-
+const { filePath } = require('../constant')
 
 const createDirectoryIfNotExists = (directoryPath) => {
     if (!fs.existsSync(directoryPath)) {
@@ -21,42 +21,47 @@ const createDirectoryIfNotExists = (directoryPath) => {
     }
 };
 
-const VideoStorage = multer.diskStorage({
+const channelAvatarStorage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, "C:/storage/raw");
+        const destinationPath = `${filePath}/channel/${req.path.split('/')[3]}/avatar/raw`;
+        createDirectoryIfNotExists(destinationPath);
+        cb(null, destinationPath);
+        // cb(null, `storage`);
     },
     filename: (req, file, cb) => {
         cb(null, file.originalname);
     }
 });
 
-const upload = multer({ storage: VideoStorage });
+const channelAvatarUploader = multer({ storage: channelAvatarStorage });
 
-router.post('/imageprocess', upload.single("image"), async (req, res) => {
-    const rawBuffer = req.file.buffer
-    const type = req.body.type
-    const name = req.body.path
-    sharp(rawBuffer).toFormat("webp").toBuffer()
-        .then(outputBuffer => {
-            // Lưu buffer mới vào file hoặc làm gì đó với nó
-            fs.writeFile(`C:/storage/image/${type}/${name}.webp`, outputBuffer, (err) => {
-                if (err) {
-                    return res.status(500).send('Error saving WebP file.');
-                }
-                res.send('WebP file saved successfully.');
+router.post('/channel/avatar/:id', channelAvatarUploader.single("image"), async (req, res) => {
+    if (req.file.mimetype) {
+        const path = req.file.path
+        const id = req.params.id
+
+        sharp(fs.readFileSync(path).buffer).toFormat("webp").toBuffer()
+            .then(outputBuffer => {
+                // Lưu buffer mới vào file hoặc làm gì đó với nó
+                fs.writeFile(`${filePath}/channel/${id}/avatar/avatar.webp`, outputBuffer, (err) => {
+                    if (err) {
+                        return res.status(500).send('Error saving WebP file.');
+                    }
+                    res.send('WebP file saved successfully.');
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                res.status(500).send('Error converting image to WebP.');
             });
-        })
-        .catch(err => {
-            console.error(err);
-            res.status(500).send('Error converting image to WebP.');
-        });
+    }
 })
 
-router.get('/image', async (req, res) => {
-    const path = req.params.path;
+router.get('/', async (req, res) => {
+    const path = req.query.path;
     if (path) {
         try {
-            const file = fs.readFileSync(path)
+            const file = fs.readFileSync(`${filePath}/${path}/avatar.webp`)
             res.end(file)
         } catch (error) {
             res.status(404).send()
@@ -65,4 +70,5 @@ router.get('/image', async (req, res) => {
         return res.status(400).send()
     }
 })
+
 module.exports = router
