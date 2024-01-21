@@ -11,7 +11,12 @@ app.use(
     })
 );
 
-app.use(cors());
+app.use(cors({
+    origin: [
+        'erinasaiyukii.com',
+        'lyart.pro.vn'
+    ]
+}));
 app.use(expresss.json());
 
 // Đưa các middleware và route vào một instance của http.Server
