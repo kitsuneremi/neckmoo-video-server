@@ -49,7 +49,7 @@ router.post('/channel/avatar/:id', channelAvatarUploader.single("image"), async 
                     }
                     res.send('WebP file saved successfully.');
                 });
-            })
+            }) 
             .catch(err => {
                 console.error(err);
                 res.status(500).send('Error converting image to WebP.');
@@ -64,7 +64,8 @@ router.get('/', async (req, res) => {
             const file = fs.readFileSync(`${filePath}/${path}/avatar.webp`)
             res.end(file)
         } catch (error) {
-            res.status(404).send()
+            const file = fs.readFileSync(`${filePath}/video-server/default-avatar.jpg`)
+            res.end(file)
         }
     } else {
         return res.status(400).send()

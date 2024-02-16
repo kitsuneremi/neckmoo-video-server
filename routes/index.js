@@ -20,7 +20,7 @@ const createDirectoryIfNotExists = (directoryPath) => {
     } else {
         console.log(`Directory already exists: ${directoryPath}`);
     }
-};
+}; 
 
 function route(app) {
     app.use('/api/decay', Decay);
