@@ -7,7 +7,8 @@ const { ffprobe } = require('fluent-ffmpeg');
 const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
 const { ref, uploadBytes } = require('firebase/storage');
 const storage = require('../config/firebase/firebase')
-const { PrismaClient } = require("@prisma/client")
+const { PrismaClient } = require("@prisma/client");
+const { filePath } = require('../constant');
 const client = new PrismaClient();
 
 const createDirectoryIfNotExists = (directoryPath) => {
@@ -62,7 +63,7 @@ function processNextVideoInQueue() {
             });
 
             const test = await client.subcribes.findMany({
-                where: {
+                where: { 
                     channelId: Number.parseInt(videoInfo.channelId)
                 }
             });
@@ -103,7 +104,7 @@ router.post('/video', upload.single("video"), async (req, res) => {
 
         const size = await getVideoResolution(videoPath);
 
-        ffmpegQueue.push({ path: videoPath, oriname: link, outputDirectory: 'C:/saveFiles', size, link, des, channelId, title });
+        ffmpegQueue.push({ path: videoPath, oriname: link, outputDirectory: `${filePath}/video`, size, link, des, channelId, title });
 
         // Kiểm tra xem số lượng công việc ffmpeg đang chạy có vượt quá giới hạn không
         if (ffmpegQueue.length <= maxConcurrentFFMpegJobs) {

@@ -3,10 +3,8 @@ const router = express.Router();
 const admin = require('../config/firebase/admin');
 
 const bucket = admin.storage().bucket();
-const fs = require('fs')
-
-const url = "https://file.erinasaiyukii.com"
-const localUrl = "http://192.168.1.187:5001"
+const fs = require('fs');
+const { fileDomain, filePath } = require('../constant');
 
 function generatePlaylist({ tsFiles, extinfLines }) {
     let playlist = "#EXTM3U\n";
@@ -28,13 +26,13 @@ router.get('/:slug/live', async (req, res) => {
     const link = req.params.slug;
 
     try {
-        const m3u8File = fs.readFileSync(`C:/saveFiles/${link}/master.m3u8`, 'utf-8');
+        const m3u8File = fs.readFileSync(`${filePath}/video/${link}/master.m3u8`, 'utf-8');
         const m3u8Content = m3u8File.toString('utf-8');
         const extinfLines = m3u8Content.match(/#EXTINF:[\d.]+,/g);
 
         try {
             const tsFiles = []; // Mảng chứa đường dẫn các file .ts
-            const files = fs.readdirSync(`C:/saveFiles/${link}`)
+            const files = fs.readdirSync(`${filePath}/video/${link}`)
             const sortedFiles = files
                 .filter(file => file.endsWith('.ts'))
                 .sort((a, b) => {
@@ -44,7 +42,7 @@ router.get('/:slug/live', async (req, res) => {
                 });
 
             sortedFiles.forEach(file => {
-                const tsFilePath = `${url}/api/segment/${link}/${file}`;
+                const tsFilePath = `${fileDomain}/api/segment/${link}/${file}`;
                 tsFiles.push(tsFilePath);
             });
             const playlist = generatePlaylist({ tsFiles, extinfLines }); // Hàm tạo playlist.m3u8 từ danh sách file .ts
@@ -70,13 +68,13 @@ router.get('/:slug/:name', async (req, res, next) => {
     console.log('get ' + link + ' file');
 
     try {
-        const m3u8File = fs.readFileSync(`C:/saveFiles/${link}/${name}`, 'utf-8');
+        const m3u8File = fs.readFileSync(`${filePath}/video/${link}/${name}`, 'utf-8');
         const m3u8Content = m3u8File.toString('utf-8');
         const extinfLines = m3u8Content.match(/#EXTINF:[\d.]+,/g);
 
         try {
             const tsFiles = []; // Mảng chứa đường dẫn các file .ts
-            const files = fs.readdirSync(`C:/saveFiles/${link}`)
+            const files = fs.readdirSync(`${filePath}/video/${link}`)
             const sortedFiles = files
                 .filter(file => file.endsWith('.ts') && file.includes(name.split('.')[0]))
                 .sort((a, b) => {
@@ -86,7 +84,7 @@ router.get('/:slug/:name', async (req, res, next) => {
                 });
 
             sortedFiles.forEach(file => {
-                const tsFilePath = `${url}/api/segment/${link}/${file}`;
+                const tsFilePath = `${fileDomain}/api/segment/${link}/${file}`;
                 tsFiles.push(tsFilePath);
             });
             const playlist = generatePlaylist({ tsFiles, extinfLines }); // Hàm tạo playlist.m3u8 từ danh sách file .ts

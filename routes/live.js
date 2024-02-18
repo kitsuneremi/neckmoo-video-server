@@ -3,11 +3,8 @@ const router = express.Router();
 const admin = require('../config/firebase/admin');
 
 const bucket = admin.storage().bucket();
-const fs = require('fs')
-
-const url = "https://file.erinasaiyukii.com"
-const localUrl = "http://192.168.1.187:5001"
-
+const fs = require('fs');
+const { filePath, liveDomain } = require('../constant');
 
 function generatePlaylist({ tsFiles, extinfLines }) {
     let playlist = "#EXTM3U\n";
@@ -32,7 +29,7 @@ router.get('/:link', async (req, res) => {
         });
         const tsFiles = [];
 
-        const m3u8File = await fs.readFileSync(`C:/live/${link}/index.m3u8`, 'utf-8');
+        const m3u8File = await fs.readFileSync(`${filePath}/live/${link}/index.m3u8`, 'utf-8');
         const m3u8Content = m3u8File.toString('utf-8');
         const extinfLines = m3u8Content.match(/#EXTINF:[\d.]+,/g);
 
@@ -50,7 +47,7 @@ router.get('/:link', async (req, res) => {
 
         sortedFiles.pop();
         sortedFiles.forEach(file => {
-            const tsFilePath = `${url}/api/livefile/${link}/${file}`
+            const tsFilePath = `${liveDomain}/api/livefile/${link}/${file}`
             tsFiles.push(tsFilePath)
         });
 

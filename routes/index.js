@@ -9,8 +9,8 @@ const os = require('os');
 const { PrismaClient } = require('@prisma/client');
 const { readdirSync, rmdirSync } = require('fs');
 const fs = require('fs')
-const path = require('path')
-
+const path = require('path');
+const { filePath } = require('../constant.js');
 const client = new PrismaClient();
 
 const createDirectoryIfNotExists = (directoryPath) => {
@@ -21,6 +21,7 @@ const createDirectoryIfNotExists = (directoryPath) => {
         console.log(`Directory already exists: ${directoryPath}`);
     }
 }; 
+
 
 function route(app) {
     app.use('/api/decay', Decay);
@@ -115,11 +116,11 @@ function route(app) {
 
             // tiến hành di chuyển file hls sang bên thư mục video
             try {
-                const livePath = `C:/live/${updatedChannel.tagName}`
-                const destinationPath = `C:/saveFiles/${updatedLive.link}`
+                const livePath = `${filePath}/live/${updatedChannel.tagName}`
+                const destinationPath = `${filePath}/video/${updatedLive.link}`
                 // Đọc danh sách tệp trong thư mục nguồn
                 const files = fs.readdirSync(livePath);
-                createDirectoryIfNotExists(`C:/saveFiles/${updatedLive.link}`)
+                createDirectoryIfNotExists(`${filePath}/video/${updatedLive.link}`)
                 // Di chuyển tất cả các tệp từ thư mục nguồn sang thư mục đích
                 files.forEach((file) => {
                     const sourceFilePath = path.join(livePath, file);
