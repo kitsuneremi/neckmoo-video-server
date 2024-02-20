@@ -33,7 +33,20 @@ const channelAvatarStorage = multer.diskStorage({
     }
 });
 
+const channelBannerStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const destinationPath = `${filePath}/channel/${req.path.split('/')[3]}/banner/raw`;
+        createDirectoryIfNotExists(destinationPath);
+        cb(null, destinationPath);
+        // cb(null, `storage`);
+    },
+    filename: (req, file, cb) => {
+        cb(null, file.originalname);
+    }
+});
+
 const channelAvatarUploader = multer({ storage: channelAvatarStorage });
+const channelBannerUploader = multer({ storage: channelBannerStorage });
 
 router.post('/channel/avatar/:id', channelAvatarUploader.single("image"), async (req, res) => {
     if (req.file.mimetype) {
@@ -44,6 +57,28 @@ router.post('/channel/avatar/:id', channelAvatarUploader.single("image"), async 
             .then(outputBuffer => {
                 // Lưu buffer mới vào file hoặc làm gì đó với nó
                 fs.writeFile(`${filePath}/channel/${id}/avatar/avatar.webp`, outputBuffer, (err) => {
+                    if (err) {
+                        return res.status(500).send('Error saving WebP file.');
+                    }
+                    res.send('WebP file saved successfully.');
+                });
+            }) 
+            .catch(err => {
+                console.error(err);
+                res.status(500).send('Error converting image to WebP.');
+            });
+    }
+})
+
+router.post('/channel/banner/:id', channelBannerUploader.single("image"), async (req, res) => {
+    if (req.file.mimetype) {
+        const path = req.file.path
+        const id = req.params.id
+
+        sharp(fs.readFileSync(path).buffer).toFormat("webp").toBuffer()
+            .then(outputBuffer => {
+                // Lưu buffer mới vào file hoặc làm gì đó với nó
+                fs.writeFile(`${filePath}/channel/${id}/banner/avatar.webp`, outputBuffer, (err) => {
                     if (err) {
                         return res.status(500).send('Error saving WebP file.');
                     }
